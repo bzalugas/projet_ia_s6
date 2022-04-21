@@ -1,1 +1,1 @@
-# projet_ia_s6
+# Projet de puissance 4 avec une intelligence artificielle à 3 niveaux.
