@@ -64,7 +64,7 @@ def getFreeRowOfCol(grid, col):
 	for i in range(grid.shape[0]):
 		if (grid[i][col] == 0):
 			lastFreeRow = i
-	return lastFreeRow
+	return int(lastFreeRow)
 
 def checkDiagonal(grid, player):
 	"""
@@ -146,7 +146,7 @@ def placePiece(grid, player, coordinates):
 	:param player: the player for whom place the piece
 	:param coordinates: tuple reprensenting row and col
 	"""
-	grid[coordinates[0]][coordinates[1]] = getSymbol(player)
+	grid[coordinates[0]][coordinates[1]] = player
 
 ################# IA PART #################
 
@@ -162,7 +162,7 @@ def player(state):
 				nbPieces += 1
 	return 1 if nbPieces % 2 == 0 else 2
 
-def actions(state):
+def getActions(state):
 	"""
 	Get possible actions in state
 	:param state: state
@@ -211,7 +211,7 @@ def successors(state):
 	Get the result of each possible action
 	:param state: state for which get results
 	"""
-	actions = actions(state)
+	actions = getActions(state)
 	succ = {}
 	for a in actions:
 		succ[a] = result(state, a)
@@ -247,7 +247,7 @@ def minimaxDecision(state):
 	Move decision with minimax algorithm
 	:param state: current state in game
 	"""
-	actions = actions(state)
+	actions = getActions(state)
 	dictActions = {}
 	for a in actions:
 		dictActions[a] = minValue(result(state, a))
@@ -275,14 +275,15 @@ def fillGrid(grid, player):
 		row = getFreeRowOfCol(grid, col)
 	placePiece(grid, player, (row, col))
 
-def askBeginPlayer():
+def askBeginPlayer(str):
 	"""
 	Ask who begins
+	:param str: string to display for the input
 	"""
 	begin = -1
-	while (begin != 1 and begin != 2):
-		begin = int(input("Qui commence ? (1/2) > "))
-	return begin
+	while (begin != 'o' and begin != 'n'):
+		begin = input(str)
+	return 1 if begin == 'o' else 2
 
 def displayEndGame(grid, winner):
 	"""
@@ -301,6 +302,27 @@ def displayEndGame(grid, winner):
 		again = input(str).lower()
 	return again
 
+def playerVsComputerGameLoop(grid, level):
+	"""
+	The game loop for the game against computer
+	:param grid: the starting grid
+	"""
+	chooseSymbols()
+
+	beginPlayer = askBeginPlayer("Voulez-vous commencer (o/n) > ")
+	currentPlayer = beginPlayer
+	while (getWinner(grid) == False or checkFilledGrid(grid) == False):
+		displayGrid(grid)
+		if (currentPlayer == 1):
+			#humain
+			fillGrid(grid, currentPlayer)
+			currentPlayer = 1 if currentPlayer == 2 else 2
+		else:
+			#ordi
+			action = minimaxDecision(grid)
+			placePiece(grid, 2, action[1])
+	return grid, getWinner(grid)
+
 def playerVsPlayerGameLoop(grid):
 	"""
 	The game loop
@@ -308,13 +330,26 @@ def playerVsPlayerGameLoop(grid):
 	"""
 	chooseSymbols()
 
-	beginPlayer = askBeginPlayer()
-	currentPlayer = beginPlayer
-	while (getWinner(grid) == False and checkFilledGrid == False):
+	currentPlayer = 1
+	while (getWinner(grid) == False and checkFilledGrid(grid) == False):
 		displayGrid(grid)
 		fillGrid(grid, currentPlayer)
 		currentPlayer = 1 if currentPlayer == 2 else 2
 	return grid, getWinner(grid)
+
+def askGame():
+	"""
+	Ask the user if he plays against human or machine
+	"""
+	choice = ''
+	while (choice != 'h' and choice != 'o'):
+		choice = input("Voulez-vous jouer contre un humain(h) ou contre l'ordinateur (o) ? > ")
+	if (choice == 'o'):
+		level = ''
+		while (level != 'f' and level != 'm' and level != 'd'):
+			level = input("Quel niveau de difficulté ?\nFacile = f\nMoyen = m\nDifficile = d\n > ")
+		return level
+	return 1
 
 def game():
 	"""
@@ -322,7 +357,11 @@ def game():
 	"""
 	playAgain = 'o'
 	while (playAgain == 'o'):
-		finalGrid, winner = playerVsPlayerGameLoop(initGrid())
+		game = askGame()
+		if game == 1:
+			finalGrid, winner = playerVsPlayerGameLoop(initGrid())
+		else:
+			finalGrid, winner = playerVsComputerGameLoop(initGrid(), game)
 		playAgain = displayEndGame(finalGrid, winner)
 	print ('Au revoir !')
 
