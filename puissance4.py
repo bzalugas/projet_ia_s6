@@ -188,7 +188,7 @@ def endGame(grid, winner):
 		again = input("Le joueur " + str(winner) + " a gagné !\nVoulez-vous rejouer ? (o/n) >").lower()
 	return again
 
-def gameLoop(grid):
+def playerVsPlayerGameLoop(grid):
 	"""
 	The game loop
 	:param grid: the starting grid
@@ -209,7 +209,7 @@ def game():
 	"""
 	playAgain = 'o'
 	while (playAgain == 'o'):
-		finalGrid, winner = gameLoop(initGrid())
+		finalGrid, winner = playerVsPlayerGameLoop(initGrid())
 		playAgain = endGame(finalGrid, winner)
 	print ('Au revoir !')
 
