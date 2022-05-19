@@ -217,7 +217,27 @@ def successors(state):
 		succ[a] = result(state, a)
 	return succ
 
-def minValue(state):
+def countPieces(state):
+	"""
+	Count pieces in a state
+	:param state: the state in which count pieces
+	"""
+	count = 0
+	for i in range(state.shape[0]):
+		for j in range(state.shape[1]):
+			if state[i][j] == 1 or state[i][j] == 2:
+				count += 1
+	return count
+
+def getDepth(initialState, state):
+	"""
+	Determine the depth of search of the current state
+	:param initialState: the initial state
+	:param state: current state
+	"""
+	return countPieces(state) - countPieces(initialState)
+
+def minValue(initialState, state, maxDepth):
 	"""
 	Get the value for Min player
 	:param state: state for which find value
@@ -225,11 +245,12 @@ def minValue(state):
 	if (terminalTest(state)):
 		return utility(state, 2)
 	value = math.inf
-	for a, s in successors(state).items():
-		value = min(value, maxValue(state))
+	if (getDepth(initialState, state) < maxDepth):
+		for a, s in successors(state).items():
+			value = min(value, maxValue(initialState, state, maxDepth))
 	return value
 
-def maxValue(state):
+def maxValue(initialState, state, maxDepth):
 	"""
 	Get the value for Max player
 	:param state: state for which find value
@@ -237,12 +258,12 @@ def maxValue(state):
 	if (terminalTest(state)):
 		return utility(state, 1)
 	value = -math.inf
-	for a, s in successors(state).items():
-		value = max(value, minValue(state))
+	if (getDepth(initialState, state) < maxDepth):	
+		for a, s in successors(state).items():
+			value = max(value, minValue(initialState, state, maxDepth))
 	return value
 	
-
-def minimaxDecision(state):
+def minimaxDecision(state, maxDepth):
 	"""
 	Move decision with minimax algorithm
 	:param state: current state in game
@@ -250,7 +271,7 @@ def minimaxDecision(state):
 	actions = getActions(state)
 	dictActions = {}
 	for a in actions:
-		dictActions[a] = minValue(result(state, a))
+		dictActions[a] = minValue(state, result(state, a), maxDepth)
 	return max(dictActions, key=dictActions.get)
 
 ########################################################################
@@ -293,13 +314,13 @@ def displayEndGame(grid, winner):
 	"""
 	displayGrid(grid)
 	again = ''
-	str = ""
+	s = ""
 	if (winner != False):
-		str = "Le joueur " + str(winner) + " a gagné !\nVoulez-vous rejouer ? (o/n) >"
+		s = "Le joueur " + str(winner) + " a gagné !\nVoulez-vous rejouer ? (o/n) >"
 	else:
-		str = "Match nul.\nVoulez-vous rejouer ? (o/n) >"
+		s = "Match nul.\nVoulez-vous rejouer ? (o/n) >"
 	while (again != 'o' and again != 'n'):
-		again = input(str).lower()
+		again = input(s).lower()
 	return again
 
 def playerVsComputerGameLoop(grid, level):
@@ -311,16 +332,17 @@ def playerVsComputerGameLoop(grid, level):
 
 	beginPlayer = askBeginPlayer("Voulez-vous commencer (o/n) > ")
 	currentPlayer = beginPlayer
-	while (getWinner(grid) == False or checkFilledGrid(grid) == False):
+	while (getWinner(grid) == False and checkFilledGrid(grid) == False):
 		displayGrid(grid)
 		if (currentPlayer == 1):
 			#humain
 			fillGrid(grid, currentPlayer)
-			currentPlayer = 1 if currentPlayer == 2 else 2
+			currentPlayer = 2
 		else:
 			#ordi
-			action = minimaxDecision(grid)
+			action = minimaxDecision(grid, 3)
 			placePiece(grid, 2, action[1])
+			currentPlayer = 1
 	return grid, getWinner(grid)
 
 def playerVsPlayerGameLoop(grid):
