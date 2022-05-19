@@ -115,6 +115,17 @@ def checkHorizontal(grid, player):
 					return True
 	return False
 
+def checkFilledGrid(grid):
+	"""
+	Check if the grid is fulfilled
+	:param grid: the grid
+	"""
+	for i in range(grid.shape[0]):
+		for j in range (grid.shape[1]):
+			if (grid[i][j] == 0):
+				return False
+	return True
+
 def getWinner(grid):
 	"""
 	Get the winner of the game if finished
@@ -127,6 +138,40 @@ def getWinner(grid):
 	return False
 
 ################# IA PART #################
+
+def player(state):
+	"""
+	Get which player should play in state
+	:param state: the state
+	"""
+	nbPieces = 0
+	for i in range(state.shape[0]):
+		for j in range(state.shape[1]):
+			if state[i][j] != 0:
+				nbPieces += 1
+	return 1 if nbPieces % 2 == 0 else 2
+
+def actions(state):
+	"""
+	Get possible actions in state
+	:param state: state
+	"""
+	actions = []
+	for j in range(state.shape[1]):
+		i = getFreeRowOfCol(state, j)
+		if (i != -1):
+			actions.append((player(state), (i,j)))
+	return actions
+
+def result(state, action):
+	"""
+	Transition function. Defines the result of the action in the state
+	:param state: the state in which do the action
+	:param action: the action to do
+	"""
+	tmpState = state.copy()
+	placePiece(tmpState, action[0], action[1])
+	return tmpState
 
 def terminalTest(state):
 	"""
@@ -154,6 +199,15 @@ def askCol(player):
 	"""
 	return int(input("Joueur " + str(player) + " (" + getSymbol(player) + ") : colonne à remplir > "))
 
+def placePiece(grid, player, coordinates):
+	"""
+	Place the piece of the player in the grid
+	:param: grid the grid in which place the piece
+	:param player: the player for whom place the piece
+	:param coordinates: tuple reprensenting row and col
+	"""
+	grid[coordinates[0]][coordinates[1]] = player
+
 def fillGrid(grid, player):
 	"""
 	Place the next piece
@@ -161,11 +215,11 @@ def fillGrid(grid, player):
 	:param player: the player who is asked to place piece
 	"""
 	row = -1
+	col = -1
 	while (row == -1):
 		col = askCol(player) - 1
-		row = getFreeRowOfCol(grid, int(col))
-	grid[row][col] = player
-	print (str(grid[row][col]))
+		row = getFreeRowOfCol(grid, col)
+	placePiece(grid, player, (row, col))
 
 def askBeginPlayer():
 	"""
@@ -176,7 +230,7 @@ def askBeginPlayer():
 		begin = int(input("Qui commence ? (1/2) > "))
 	return begin
 
-def endGame(grid, winner):
+def displayEndGame(grid, winner):
 	"""
 	End game display
 	:param grid: the final grid to display
@@ -184,8 +238,13 @@ def endGame(grid, winner):
 	"""
 	displayGrid(grid)
 	again = ''
+	str = ""
+	if (winner != False):
+		str = "Le joueur " + str(winner) + " a gagné !\nVoulez-vous rejouer ? (o/n) >"
+	else:
+		str = "Match nul.\nVoulez-vous rejouer ? (o/n) >"
 	while (again != 'o' and again != 'n'):
-		again = input("Le joueur " + str(winner) + " a gagné !\nVoulez-vous rejouer ? (o/n) >").lower()
+		again = input(str).lower()
 	return again
 
 def playerVsPlayerGameLoop(grid):
@@ -197,7 +256,7 @@ def playerVsPlayerGameLoop(grid):
 
 	beginPlayer = askBeginPlayer()
 	currentPlayer = beginPlayer
-	while (getWinner(grid) == False):
+	while (getWinner(grid) == False and checkFilledGrid == False):
 		displayGrid(grid)
 		fillGrid(grid, currentPlayer)
 		currentPlayer = 1 if currentPlayer == 2 else 2
@@ -210,7 +269,7 @@ def game():
 	playAgain = 'o'
 	while (playAgain == 'o'):
 		finalGrid, winner = playerVsPlayerGameLoop(initGrid())
-		playAgain = endGame(finalGrid, winner)
+		playAgain = displayEndGame(finalGrid, winner)
 	print ('Au revoir !')
 
 game()
