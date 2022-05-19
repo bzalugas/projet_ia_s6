@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 # Global variables
 grid = np.zeros((6,7), dtype=np.int8)
@@ -137,6 +138,16 @@ def getWinner(grid):
 		return 2
 	return False
 
+# coordinates = (row,col)
+def placePiece(grid, player, coordinates):
+	"""
+	Place the piece of the player in the grid
+	:param: grid the grid in which place the piece
+	:param player: the player for whom place the piece
+	:param coordinates: tuple reprensenting row and col
+	"""
+	grid[coordinates[0]][coordinates[1]] = getSymbol(player)
+
 ################# IA PART #################
 
 def player(state):
@@ -178,13 +189,16 @@ def terminalTest(state):
 	The terminal test
 	:param state: the state (=grid) to test
 	"""
-	return True if getWinner(state) != False else False
+	if getWinner(state) != False or checkFilledGrid(state) == True:
+		return True
+	return False
+
 
 def utility(state, player):
 	"""
 	Evaluation of the state
 	:param state: the state (=grid) in which to calculate utility
-	:param player: the num of the MAX player (1 or 2)
+	:param player: the num of the player (1 or 2)
 	"""
 	if getWinner(state) == player:
 		return 1
@@ -192,21 +206,61 @@ def utility(state, player):
 		return 0
 	return -1
 
+def successors(state):
+	"""
+	Get the result of each possible action
+	:param state: state for which get results
+	"""
+	actions = actions(state)
+	succ = {}
+	for a in actions:
+		succ[a] = result(state, a)
+	return succ
+
+def minValue(state):
+	"""
+	Get the value for Min player
+	:param state: state for which find value
+	"""
+	if (terminalTest(state)):
+		return utility(state, 2)
+	value = math.inf
+	for a, s in successors(state).items():
+		value = min(value, maxValue(state))
+	return value
+
+def maxValue(state):
+	"""
+	Get the value for Max player
+	:param state: state for which find value
+	"""
+	if (terminalTest(state)):
+		return utility(state, 1)
+	value = -math.inf
+	for a, s in successors(state).items():
+		value = max(value, minValue(state))
+	return value
+	
+
+def minimaxDecision(state):
+	"""
+	Move decision with minimax algorithm
+	:param state: current state in game
+	"""
+	actions = actions(state)
+	dictActions = {}
+	for a in actions:
+		dictActions[a] = minValue(result(state, a))
+	return max(dictActions, key=dictActions.get)
+
+########################################################################
+
 def askCol(player):
 	"""
 	Ask player for column to place piece
 	:param player: the player who is asked
 	"""
 	return int(input("Joueur " + str(player) + " (" + getSymbol(player) + ") : colonne à remplir > "))
-
-def placePiece(grid, player, coordinates):
-	"""
-	Place the piece of the player in the grid
-	:param: grid the grid in which place the piece
-	:param player: the player for whom place the piece
-	:param coordinates: tuple reprensenting row and col
-	"""
-	grid[coordinates[0]][coordinates[1]] = player
 
 def fillGrid(grid, player):
 	"""
